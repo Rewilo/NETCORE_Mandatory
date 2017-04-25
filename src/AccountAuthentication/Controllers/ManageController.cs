@@ -328,6 +328,11 @@ namespace AccountAuthentication.Controllers
             return RedirectToAction(nameof(ManageLogins), new { Message = message });
         }
 
+        public ActionResult IndexUser()
+        {
+            return View(_userManager.Users.ToList());
+        }
+
         #region Helpers
 
         private void AddErrors(IdentityResult result)
