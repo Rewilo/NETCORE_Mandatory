@@ -91,6 +91,9 @@ namespace AccountAuthentication
                 app.UseExceptionHandler("/Home/Error");
             }
 
+            RolesData.SeedRoles(app.ApplicationServices).Wait();
+
+
             app.UseStaticFiles();
 
             app.UseIdentity();

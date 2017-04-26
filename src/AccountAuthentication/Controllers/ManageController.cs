@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 using AccountAuthentication.Models;
 using AccountAuthentication.Models.ManageViewModels;
 using AccountAuthentication.Services;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using AccountAuthentication.Data;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace AccountAuthentication.Controllers
 {
@@ -20,19 +23,24 @@ namespace AccountAuthentication.Controllers
         private readonly IEmailSender _emailSender;
         private readonly ISmsSender _smsSender;
         private readonly ILogger _logger;
+        private readonly RoleStore<IdentityRole> _roleStore;
+        private readonly ApplicationDbContext _dbContext;
 
         public ManageController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IEmailSender emailSender,
         ISmsSender smsSender,
+        ApplicationDbContext dbContext,
         ILoggerFactory loggerFactory)
         {
+            _dbContext = dbContext;
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
             _smsSender = smsSender;
             _logger = loggerFactory.CreateLogger<ManageController>();
+            _roleStore = new RoleStore<IdentityRole>(_dbContext);
         }
 
         //
@@ -328,38 +336,52 @@ namespace AccountAuthentication.Controllers
             return RedirectToAction(nameof(ManageLogins), new { Message = message });
         }
 
-        public ActionResult IndexUser()
+        public IActionResult IndexUser()
         {
             return View(_userManager.Users.ToList());
         }
 
-        #region Helpers
-
-        private void AddErrors(IdentityResult result)
+        [HttpPost]
+        public IActionResult ManageUserRole(string id)
         {
-            foreach (var error in result.Errors)
+            var _foundUser = _userManager.Users.FirstOrDefault(x => x.Id.Equals(id));
+            var _roleStoreList = _roleStore.Roles.ToList();
+            var viewModel = new ManageUserRoleModel()
             {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-        }
+                User = _foundUser,
+                Roles = new SelectList(_roleStoreList, "name", "value")
+            };
+            return View();
 
-        public enum ManageMessageId
-        {
-            AddPhoneSuccess,
-            AddLoginSuccess,
-            ChangePasswordSuccess,
-            SetTwoFactorSuccess,
-            SetPasswordSuccess,
-            RemoveLoginSuccess,
-            RemovePhoneSuccess,
-            Error
-        }
-
-        private Task<ApplicationUser> GetCurrentUserAsync()
-        {
-            return _userManager.GetUserAsync(HttpContext.User);
-        }
-
-        #endregion
     }
+
+    #region Helpers
+
+    private void AddErrors(IdentityResult result)
+    {
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+    }
+
+    public enum ManageMessageId
+    {
+        AddPhoneSuccess,
+        AddLoginSuccess,
+        ChangePasswordSuccess,
+        SetTwoFactorSuccess,
+        SetPasswordSuccess,
+        RemoveLoginSuccess,
+        RemovePhoneSuccess,
+        Error
+    }
+
+    private Task<ApplicationUser> GetCurrentUserAsync()
+    {
+        return _userManager.GetUserAsync(HttpContext.User);
+    }
+
+    #endregion
+}
 }

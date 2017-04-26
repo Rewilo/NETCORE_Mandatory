@@ -1,11 +1,13 @@
 @model List<ApplicationUser>
+    <a asp-action="Register" asp-controller="Account" class="btn btn-primary">"Click me to user create" - Martin J. Hammer</a>
 
 <h2>Users</h2>
 @if(Model != null && Model.Any())
 {
     foreach(var m in Model)
     {
-        <p>@m.Email</p>
+        <p>@m.Email - <a asp-action="ManageUserRole" asp-controller="Manage" asp-route-id="@m.Id" class="btn btn-primary"> Manage user role</a></p>
     }
 }
+
 
