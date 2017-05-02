@@ -341,7 +341,7 @@ namespace AccountAuthentication.Controllers
             return View(_userManager.Users.ToList());
         }
 
-        [HttpPost]
+        [HttpGet]
         public IActionResult ManageUserRole(string id)
         {
             var _foundUser = _userManager.Users.FirstOrDefault(x => x.Id.Equals(id));
@@ -349,39 +349,49 @@ namespace AccountAuthentication.Controllers
             var viewModel = new ManageUserRoleModel()
             {
                 User = _foundUser,
-                Roles = new SelectList(_roleStoreList, "name", "value")
+                Roles = new SelectList(_roleStoreList, "Id", "Name")
             };
-            return View();
+            return View(viewModel);
 
-    }
-
-    #region Helpers
-
-    private void AddErrors(IdentityResult result)
-    {
-        foreach (var error in result.Errors)
-        {
-            ModelState.AddModelError(string.Empty, error.Description);
         }
-    }
+        [HttpPost]
+        public IActionResult ManageUserRole(string id, ManageUserRoleModel viewmodel)
+        {
+            var user = _userManager.Users.FirstOrDefault(u => u.Id.Equals(id));
+            var role = _roleStore.Roles.FirstOrDefault(rs => rs.Id.Equals(viewmodel.SelectedRoleId));
 
-    public enum ManageMessageId
-    {
-        AddPhoneSuccess,
-        AddLoginSuccess,
-        ChangePasswordSuccess,
-        SetTwoFactorSuccess,
-        SetPasswordSuccess,
-        RemoveLoginSuccess,
-        RemovePhoneSuccess,
-        Error
-    }
 
-    private Task<ApplicationUser> GetCurrentUserAsync()
-    {
-        return _userManager.GetUserAsync(HttpContext.User);
-    }
+            var result = _userManager.AddToRoleAsync(user, role.Name).Result;
+            return RedirectToAction("IndexUser");
+        }
 
-    #endregion
-}
+        #region Helpers
+
+        private void AddErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+        }
+
+        public enum ManageMessageId
+        {
+            AddPhoneSuccess,
+            AddLoginSuccess,
+            ChangePasswordSuccess,
+            SetTwoFactorSuccess,
+            SetPasswordSuccess,
+            RemoveLoginSuccess,
+            RemovePhoneSuccess,
+            Error
+        }
+
+        private Task<ApplicationUser> GetCurrentUserAsync()
+        {
+            return _userManager.GetUserAsync(HttpContext.User);
+        }
+
+        #endregion
+    }
 }

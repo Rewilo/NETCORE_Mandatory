@@ -7,16 +7,26 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AccountAuthentication.Data;
 using AccountAuthentication.Models.ToDoModels;
+using Microsoft.AspNetCore.Authorization;
+using AccountAuthentication.Services;
+using Microsoft.AspNetCore.Identity;
+using AccountAuthentication.Models;
+using System.Text;
 
 namespace AccountAuthentication.Controllers
 {
+    [Authorize]
     public class ToDoModelsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailSender _emailSender;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ToDoModelsController(ApplicationDbContext context)
+        public ToDoModelsController(ApplicationDbContext context, IEmailSender emailSender, UserManager<ApplicationUser> userManager)
         {
-            _context = context;    
+            _context = context;
+            _emailSender = emailSender;
+            _userManager = userManager;
         }
 
         // GET: ToDoModels
@@ -42,17 +52,18 @@ namespace AccountAuthentication.Controllers
 
             return View(toDoModel);
         }
-
+        [Authorize(Roles = "Team player,Organizer")]
         // GET: ToDoModels/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: ToDoModels/Create
+        // POST: ToDoModels/Create  
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize(Roles = "Team player,Organizer")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,DateTimeStart,DateTimeEnd,Details,Done")] ToDoModel toDoModel)
         {
@@ -64,7 +75,7 @@ namespace AccountAuthentication.Controllers
             }
             return View(toDoModel);
         }
-
+        [Authorize(Roles = "Team player,Organizer")]
         // GET: ToDoModels/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -85,6 +96,7 @@ namespace AccountAuthentication.Controllers
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize(Roles = "Team player,Organizer")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,DateTimeStart,DateTimeEnd,Details,Done")] ToDoModel toDoModel)
         {
@@ -99,6 +111,19 @@ namespace AccountAuthentication.Controllers
                 {
                     _context.Update(toDoModel);
                     await _context.SaveChangesAsync();
+
+                    //String builder to make the message we send
+                    var message = new StringBuilder();
+                    message.Append("You have completed a task!  ").AppendLine()
+                        .Append("The details of your completed message is: ").AppendLine()
+                        .Append(toDoModel.Details);
+
+                    if (toDoModel.Done == true)
+                    { 
+                        //Get user and awaits it, then use the email in the user to send it.
+                        var uservar = await _userManager.GetUserAsync(User);
+                        await _emailSender.SendEmailAsync(uservar.Email, toDoModel.Title, message.ToString());
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -115,7 +140,7 @@ namespace AccountAuthentication.Controllers
             }
             return View(toDoModel);
         }
-
+        [Authorize(Roles = "Team Player")]
         // GET: ToDoModels/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -136,6 +161,7 @@ namespace AccountAuthentication.Controllers
 
         // POST: ToDoModels/Delete/5
         [HttpPost, ActionName("Delete")]
+        [Authorize(Roles = "Team Player")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -144,6 +170,8 @@ namespace AccountAuthentication.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction("Index");
         }
+
+
 
         private bool ToDoModelExists(int id)
         {

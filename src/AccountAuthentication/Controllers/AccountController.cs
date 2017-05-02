@@ -438,6 +438,11 @@ namespace AccountAuthentication.Controllers
                 return View(model);
             }
         }
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
 
         #region Helpers
 

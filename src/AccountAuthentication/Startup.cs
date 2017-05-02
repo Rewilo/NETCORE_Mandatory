@@ -16,11 +16,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration.UserSecrets;
 
+//[assembly: UserSecretsId("aspnet-AccountAuthentication-35c8c259-35fe-435f-9954-8efb0ce7bbe2")]
 namespace AccountAuthentication
 {
     public class Startup
     {
-        [assembly: UserSecretsId("aspnet-AccountAuthentication-35c8c259-35fe-435f-9954-8efb0ce7bbe2")]
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()

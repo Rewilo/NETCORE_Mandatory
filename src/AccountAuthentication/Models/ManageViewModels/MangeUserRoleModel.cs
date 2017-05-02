@@ -12,5 +12,7 @@ namespace AccountAuthentication.Models.ManageViewModels
         public ApplicationUser User { get; set; }
         public SelectList Roles { get; set; }
 
+        public string SelectedRoleId { get; set; }
+
     }
 }
